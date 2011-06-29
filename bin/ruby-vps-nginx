@@ -1,0 +1,7 @@
+#! /usr/bin/env ruby
+
+require "thor"
+
+require File.expand_path("../../lib/ruby_vps/cli/nginx", __FILE__)
+
+RubyVPS::CLI::Nginx.start

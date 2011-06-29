@@ -1,7 +1,0 @@
-#! /usr/bin/env ruby
-
-require "thor"
-
-require File.expand_path("../../lib/nginx", __FILE__)
-
-Nginx.start

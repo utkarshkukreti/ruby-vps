@@ -4,22 +4,26 @@ Gem::Specification.new do |gem|
 
   ##
   # General configuration / information
-  gem.name        = 'gens'
+  gem.name        = 'ruby-vps'
   gem.version     = '0.0.0'
   gem.platform    = Gem::Platform::RUBY
   gem.authors     = 'Michael van Rooijen'
   gem.email       = 'meskyanichi@gmail.com'
   gem.homepage    = 'http://michaelvanrooijen.com/'
-  gem.summary     = %|Gens Summary|
-  gem.description = %|Gens Description|
+  gem.summary     = %|Ruby VPS Summary|
+  gem.description = %|Ruby VPS Description|
 
   ##
   # Files and folder that need to be compiled in to the Ruby Gem
   gem.files = %x[git ls-files].split("\n")
 
   ##
+  # Add the lib dir to the require path
+  gem.require_path = 'lib'
+
+  ##
   # The Backup CLI executable
-  gem.executables = ['gen-nginx']
+  gem.executables = %w[nginx capistrano mongodb postgresql server].map { |u| "ruby-vps-#{u}" }
 
   ##
   # Production gem dependencies
