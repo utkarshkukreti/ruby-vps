@@ -25,9 +25,9 @@ module RubyVPS
       method_option :use_sudo, :type => :boolean, :default => false
       method_option :pty,      :type => :boolean, :default => true
 
-      desc "generate:config", "Generates the main nginx configuration file"
+      desc "generate-config", "Generates the main nginx configuration file"
 
-      define_method "generate:config" do
+      def generate_config
         template("Capfile", "Capfile")
         template("deploy.rb", File.join("config", "deploy.rb"))
       end
