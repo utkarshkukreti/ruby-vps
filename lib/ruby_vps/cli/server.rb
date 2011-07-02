@@ -55,6 +55,8 @@ module RubyVPS
             mv ~/.bashrc.tmp ~/.bashrc && source ~/.bashrc
           fi
 
+          ln -fs /usr/local/bin/rvm-shell /usr/local/rvm/bin/rvm-shell
+
           curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > ~/.gemrc
 
           rvm install #{options[:ruby_version]}
