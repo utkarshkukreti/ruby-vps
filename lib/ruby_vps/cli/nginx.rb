@@ -1,6 +1,8 @@
 # encoding: utf-8
 
+require 'tempfile'
 require 'net/ssh'
+require 'net/sftp'
 require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
@@ -18,18 +20,32 @@ module RubyVPS
 
       # config
       method_option :pid,                           :type => :string, :default => "/etc/nginx/tmp/pids/nginx.pid"
-      method_option :user,                          :type => :string, :default => "www"
-      method_option :group,                         :type => :string, :default => "data"
+      method_option :nginx_user,                    :type => :string, :default => "www"
+      method_option :nginx_group,                   :type => :string, :default => "data"
       method_option :worker_processes,              :type => :string, :default => "1"
       method_option :worker_connections,            :type => :string, :default => "1024"
       method_option :server_names_hash_bucket_size, :type => :string, :default => "64"
       method_option :client_max_body_size,          :type => :string, :default => "25"
       method_option :applications_path,             :type => :string, :default => "applications"
 
+      connection_options
+
       desc "generate_config", "Generates the main nginx configuration file"
 
       def generate_config
-        template("main.conf", File.join(options[:out], "nginx.conf"))
+        nginx_conf = Tempfile.new('nginx.conf')
+        template("main.conf", nginx_conf.path)
+
+        Net::SFTP.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |sftp|
+          sftp.upload!(
+            nginx_conf.path,
+            "tmp/nginx.conf"
+          )
+        end
+
+        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
+          ssh.exec! "sudo mv ~/tmp/nginx.conf #{options[:out]}/nginx.conf"
+        end
       end
 
       # general
@@ -50,16 +66,36 @@ module RubyVPS
       method_option :ssl_redirect, :type => :boolean, :default => false, :aliases => "-r", :desc => "Redirect all requests from HTTP to HTTPS."
       method_option :ssl_path, :type => :string, :default => "/etc/ssl", :desc => "Path to where the SSL files will be copied."
 
+      connection_options
+
       desc "generate-app-config", "Generates an application-specific configuration file"
 
       def generate_app_config
-        template("app.conf", File.join(options[:out], "#{options[:name]}.conf"))
-        [:crt, :key].each do |file|
-          if options[file] and File.exist?(options[file])
-            copy_file(File.expand_path(
-              options[file]),
-              File.join(options[:ssl_path], File.basename(options[file]))
-            )
+        app_conf = Tempfile.new('app.conf')
+        template("app.conf", app_conf.path)
+
+        Net::SFTP.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |sftp|
+          [:crt, :key].each do |file|
+            if options[file] and File.exist?(options[file])
+              sftp.upload!(
+                File.expand_path(options[file]),
+                File.join("tmp", File.basename(options[file]))
+              )              
+            end
+          end
+
+          sftp.upload!(
+            app_conf.path,
+            File.join("tmp", "#{options[:name]}.conf")
+          )
+        end
+
+        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
+          ssh.exec "sudo mv #{File.join("~/tmp", "#{options[:name]}.conf")} #{File.join(options[:out], "#{options[:name]}.conf")}"
+          [:crt, :key].each do |file|
+            if options[file] and File.exist?(options[file])
+              ssh.exec "sudo mv ~/tmp/#{File.basename(options[file])} #{options[:ssl_path]}/#{File.basename(options[file])}"
+            end
           end
         end
       end
