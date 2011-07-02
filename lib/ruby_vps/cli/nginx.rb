@@ -1,11 +1,13 @@
 # encoding: utf-8
 
 require 'net/ssh'
+require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
   module CLI
     class Nginx < Thor
       include Thor::Actions
+      include RubyVPS::Helpers
 
       def self.source_root
         File.dirname(__FILE__) + "/templates/nginx"
@@ -63,11 +65,7 @@ module RubyVPS
       end
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.0.4"
-
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :default => "deployer"
-      method_option :password, :type => :string, :aliases => "-P"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "provision", "Provisions the Linux server with NGINX."
 
@@ -94,23 +92,13 @@ module RubyVPS
           stop on runlevel [016]
           respawn
 
-          exec /usr/sbin/nginx -c /etc/nginx/conf/nginx.conf  -g "daemon off;"
+          exec /usr/sbin/nginx -c /etc/nginx/conf/nginx.conf  -g 'daemon off;'
           " | sudo tee /etc/init/nginx.conf
 
           sleep 1 && sudo restart nginx || sudo start nginx
         EOS
 
-        say "Attempting to connect to server.."
-
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
-          say "Connected! Installing Nginx..", :green
-
-          ssh.exec!(command) do |channel, stream, data|
-            puts data if stream == :stdout
-          end
-
-          say "Done!", :green
-        end
+        execute_remotely!(command, "Preparing to install Nginx..", options)
       end
 
     end

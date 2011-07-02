@@ -1,19 +1,17 @@
 # encoding: utf-8
 
 require 'net/ssh'
+require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
   module CLI
     class MongoDB < Thor
       include Thor::Actions
+      include RubyVPS::Helpers
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.8.2"
       method_option :bit,     :type => :string, :aliases => "-b", :default => "64"
-
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :default => "deployer"
-      method_option :password, :type => :string, :aliases => "-P"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "provision", "Provisions the Linux server with MongoDB."
 
@@ -34,7 +32,7 @@ module RubyVPS
           sudo rm -rf /etc/mongodb
           sudo mv mongodb-linux-#{bit}-#{version} /etc/mongodb
 
-          sudo mkdir -p /data/db
+          sudo mkdir -p /data/db /data/log
 
           echo "
           start on runlevel [2345]
@@ -47,17 +45,7 @@ module RubyVPS
           sleep 1 && sudo restart mongodb || sudo start mongodb
         EOS
 
-        say "Attempting to connect to server.."
-
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
-          say "Connected! Installing MongoDB..", :green
-
-          ssh.exec!(command) do |channel, stream, data|
-            puts data if stream == :stdout
-          end
-
-          say "Done!", :green
-        end
+        execute_remotely!(command, "Preparing to install MongoDB..", options)
       end
 
     end

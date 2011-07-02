@@ -1,18 +1,16 @@
 # encoding: utf-8
 
 require 'net/ssh'
+require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
   module CLI
     class Redis < Thor
       include Thor::Actions
+      include RubyVPS::Helpers
 
       method_option :version, :type => :string, :aliases => "-v", :default => "2.2.11"
-
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :default => "deployer"
-      method_option :password, :type => :string, :aliases => "-P"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "provision", "Provisions the Linux server with Redis."
 
@@ -42,17 +40,7 @@ module RubyVPS
           sleep 1 && sudo restart redis || sudo start redis
         EOS
 
-        say "Attempting to connect to server.."
-
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
-          say "Connected! Installing Redis..", :green
-
-          ssh.exec!(command) do |channel, stream, data|
-            puts data if stream == :stdout
-          end
-
-          say "Done!", :green
-        end
+        execute_remotely!(command, "Preparing to install Redis..", options)
       end
 
     end

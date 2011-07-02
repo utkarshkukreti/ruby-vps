@@ -1,18 +1,16 @@
 # encoding: utf-8
 
 require 'net/ssh'
+require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
   module CLI
     class PostgreSQL < Thor
       include Thor::Actions
+      include RubyVPS::Helpers
 
       method_option :version, :type => :string, :aliases => "-v", :default => "9.0.4"
-
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :default => "deployer"
-      method_option :password, :type => :string, :aliases => "-P"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "provision", "Provisions the Linux server with PostgreSQL."
 
@@ -52,17 +50,7 @@ module RubyVPS
           sleep 5 && sudo su - postgres -c "/etc/postgresql/bin/createuser deployer --createdb --no-createrole --no-superuser"
         EOS
 
-        say "Attempting to connect to server.."
-
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
-          say "Connected! Installing PostgreSQL..", :green
-
-          ssh.exec!(command) do |channel, stream, data|
-            puts data if stream == :stdout
-          end
-
-          say "Done!", :green
-        end
+        execute_remotely!(command, "Preparing to install PostgreSQL..", options)
       end
 
     end

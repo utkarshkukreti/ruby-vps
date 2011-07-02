@@ -1,12 +1,14 @@
 # encoding: utf-8
 
 require 'net/ssh'
+require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
   module CLI
     class Server < Thor
       include Thor::Actions
       include Thor::Base
+      include RubyVPS::Helpers
 
       method_option :ip,            :type => :string, :aliases => "-i", :required => true, :desc => "The IP of the server you want to prepare."
       method_option :port,          :type => :string, :aliases => "-p", :default => "22", :desc => "The port you want to connect through."
@@ -106,9 +108,7 @@ module RubyVPS
       end
 
       method_option :key,  :type => :string, :aliases => "-k", :default => File.join(ENV['HOME'], '.ssh', 'id_rsa.pub')
-      method_option :ip,   :type => :string, :aliases => "-i", :required => true
-      method_option :user, :type => :string, :aliases => "-u", :required => true, :default => "deployer"
-      method_option :port, :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "install-ssh-key", "Installs your local ssh key on the remote server."
 
@@ -118,49 +118,35 @@ module RubyVPS
           exit
         end
 
-        say "Going to install '#{options[:key]}' for '#{options[:user]}' at '#{options[:ip]}'..", :green
-        command = %Q{cat '#{options[:key]}' | ssh #{options[:user]}@#{options[:ip]} -p #{options[:port]} "mkdir -p .ssh && cat - >> .ssh/authorized_keys"}
-
-        if %x[ #{command} ].empty?
-          say "SSH key for '#{options[:user]}' was successfully installed to '#{options[:ip]}'.", :green
-        else
-          say "Could not install your SSH key.", :red
-        end
+        execute_remotely!(
+          %{mkdir -p ~/.ssh && echo "#{File.read(options[:key])}" >> ~/.ssh/authorized_keys},
+          "Preparing to install ssh key..",
+          options
+        )
       end
 
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :required => true, :default => "deployer"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "generate-remote-ssh-key", "Generates a id_rsa/id_rsa.pub key pair on the remote server."
 
-      def generate_remote_ssh_key
-        connection = %Q{ ssh #{options[:user]}@#{options[:ip]} -p #{options[:port]} }
-        response   = %x[ #{connection} "rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub > /dev/null 2>&1; ssh-keygen -N '' -t rsa -f ~/.ssh/id_rsa"]
-
-        if response =~ /Generating public\/private rsa key pair/
-          say "The SSH public/private keys have been generated in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub", :green
-        else
-          say "Could not generate new public/private keys.", :red
-        end
+      def generate_remote_ssh_key        
+        execute_remotely!(
+          "rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub > /dev/null 2>&1; ssh-keygen -N '' -t rsa -f ~/.ssh/id_rsa",
+          "Preparing to generate a new ssh key..",
+          options
+        )
       end
 
-      method_option :ip,       :type => :string, :aliases => "-i", :required => true
-      method_option :user,     :type => :string, :aliases => "-u", :required => true, :default => "deployer"
-      method_option :port,     :type => :string, :aliases => "-p", :default => "22"
+      connection_options
 
       desc "remote-ssh-key", "Displays the public ssh key (id_rsa.pub) of the remote server."
 
       def remote_ssh_key
-        connection = %Q{ ssh #{options[:user]}@#{options[:ip]} -p #{options[:port]} }
-        response   = %x[ #{connection} "cat ~/.ssh/id_rsa.pub" ]
-
-        if response.empty?
-          say "Could not find the id_rsa.pub public ssh key.", :red
-        else
-          say  "Public ssh key found!", :green
-          puts "\n#{response}"
-        end
+        execute_remotely!(
+          %{cat ~/.ssh/id_rsa.pub || echo "Remote key not yet generated!"},
+          "Preparing to read the public ssh key..",
+          options
+        )
       end
 
     end
