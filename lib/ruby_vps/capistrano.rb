@@ -44,6 +44,19 @@ Capistrano::Configuration.instance(true).load do
   namespace :deploy do
     task :restart do
     end
+
+    task :finalize_update, :except => { :no_release => true } do
+      run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
+      run <<-CMD
+        rm -rf #{latest_release}/log #{latest_release}/public/system #{latest_release}/tmp/pids &&
+        mkdir -p #{latest_release}/public &&
+        mkdir -p #{latest_release}/tmp &&
+        ln -s #{shared_path}/log #{latest_release}/log &&
+        ln -s #{shared_path}/system #{latest_release}/public/system &&
+        ln -s #{shared_path}/pids #{latest_release}/tmp/pids
+      CMD
+    end
+
   end
 
 end
