@@ -9,7 +9,7 @@ set :repository,  "<%= options[:repository] %>"
 set :branch,      "<%= options[:branch] %>"
 
 set :rvm_ruby_string, "<%= options[:ruby_version] %>"
-set :deploy_to,       "<%= options[:deploy_to] %>"
+set :deploy_to,       "<%= File.join(options[:deploy_to], options[:application]) %>"
 set :user,            "<%= options[:user] %>"
 set :scm,             :<%= options[:scm] %>
 set :port,            <%= options[:port] %>

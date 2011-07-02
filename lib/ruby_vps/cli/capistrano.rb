@@ -16,7 +16,7 @@ module RubyVPS
       method_option :branch,       :type => :string, :aliases => "-b", :default => "master"
 
       method_option :ruby_version, :type => :string, :aliases => "-v", :default => "1.9.2"
-      method_option :deploy_to,    :type => :string, :aliases => "-d", :default => "/var/applications/"
+      method_option :deploy_to,    :type => :string, :aliases => "-d", :default => "/var/applications"
 
       method_option :user,     :type => :string,  :aliases => "-u",  :default => "deployer"
       method_option :scm,      :type => :string,  :aliases => "-s",  :default => "git"
