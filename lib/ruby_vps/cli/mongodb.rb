@@ -26,7 +26,8 @@ module RubyVPS
         end
 
         command = <<-EOS
-          mkdir ~/tmp && cd ~/tmp
+          mkdir ~/tmp
+          cd ~/tmp
 
           wget http://fastdl.mongodb.org/linux/mongodb-linux-#{bit}-#{version}.tgz
           tar -xf mongodb-linux-#{bit}-#{version}.tgz

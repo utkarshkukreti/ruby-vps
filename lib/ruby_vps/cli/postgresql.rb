@@ -20,7 +20,8 @@ module RubyVPS
         version = options[:version]
 
         command = <<-EOS
-          mkdir ~/tmp && cd ~/tmp
+          mkdir ~/tmp
+          cd ~/tmp
 
           sudo useradd postgres -s /bin/bash -m
 

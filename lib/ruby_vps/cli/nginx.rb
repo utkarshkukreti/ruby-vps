@@ -78,7 +78,9 @@ module RubyVPS
           sudo aptitude update
           sudo aptitude install -y autotools-dev libpcre3-dev zlib1g-dev libssl-dev
 
-          mkdir ~/tmp && cd ~/tmp
+          mkdir ~/tmp
+          cd ~/tmp
+
           wget http://nginx.org/download/nginx-#{version}.tar.gz
           tar -zxvf nginx-#{version}.tar.gz
           cd nginx-#{version}
