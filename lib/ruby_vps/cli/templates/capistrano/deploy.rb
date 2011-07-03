@@ -15,6 +15,8 @@ set :scm,             :<%= options[:scm] %>
 set :port,            <%= options[:port] %>
 set :use_sudo,        <%= options[:use_sudo] ? "true" : "false" %>
 
+set :db_migrate,      true
+
 default_run_options[:pty] = <%= options[:default_run_options] ? "true" : "false" %>
 
 role :web, "<%= options[:ip] %>"

@@ -4,7 +4,7 @@ Capistrano::Configuration.instance(true).load do
 
   after 'deploy:update', 'bundle:install'
   after 'deploy:update', 'foreman:export'
-  after 'deploy:update', 'foreman:restart'
+  after 'deploy:restart', 'foreman:restart'
 
   namespace :bundle do
     desc "Installs the application dependencies"
@@ -50,6 +50,10 @@ Capistrano::Configuration.instance(true).load do
 
   namespace :deploy do
     task :restart do
+      begin
+        run "cd #{release_path} && rake db:migrate" if db_migrate
+      rescue NameError
+      end
     end
 
     task :finalize_update, :except => { :no_release => true } do
