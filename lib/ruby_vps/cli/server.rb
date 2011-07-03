@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+require 'fileutils'
+require 'yaml'
 require 'net/ssh'
 require File.expand_path("../../helpers", __FILE__)
 
@@ -34,7 +36,7 @@ module RubyVPS
           zlib1g zlib1g-dev libssl-dev libyaml-dev libxml2-dev libxslt-dev \
           autoconf libpcre3 libpcre3-dev libpcrecpp0 libc6-dev ncurses-dev
 
-          useradd deployer -s /bin/bash -m --password="$(openssl passwd #{options[:deployer_password]})"
+          useradd deployer -s /bin/bash -m --password="$(openssl passwd #{options[:set_deployer_password]})"
 
           if [[ $(cat /etc/sudoers) != *deployer* ]]; then
             sed -i "/root.*ALL=(ALL) ALL/ a\\deployer ALL\=\(ALL\) NOPASSWD\: ALL" /etc/sudoers
@@ -85,12 +87,12 @@ module RubyVPS
 
         Net::SSH.start(options[:ip], 'root', :password => options[:root_password], :port => options[:port]) do |ssh|
           say "Connection established! Preparing to provision server..", :green
-
+        
           ssh.exec!(command) do |channel, stream, data|
             puts data if stream == :stdout
             channel.send_data("#{options[:set_deployer_password]}\n") if data =~ /Password\:/
           end
-
+        
           say ""
           say "The server has been provisioned, a short summary:", :green
           say "-------------------------------------------------", :green
@@ -102,15 +104,25 @@ module RubyVPS
           say "* Changing SSH port from #{options[:port]} to #{options[:set_ssh_port]}"
           say "* Enable firewall with UFW, allowing only ports 80, 433 and #{options[:set_ssh_port]} for security"
           say "* Disable password-based ssh logins as root for security"
-
         end
+
+        FileUtils.mkdir_p("./config")
+        File.open("./config/deploy.yml", "w") do |file|
+          file.write({
+            :ip       => options[:ip],
+            :port     => options[:set_ssh_port],
+            :password => options[:set_deployer_password]
+          }.to_yaml)          
+        end
+
+        say "Created configuration file in config/deploy.yml containing connection options.", :green
+
       rescue Net::SSH::AuthenticationFailed => e
         say "\nCould not connect to server (could not authenticate). Please ensure the root password is correct.", :red
         puts "\n#{e.backtrace}"
       end
 
-      method_option :key,  :type => :string, :aliases => "-k", :default => File.join(ENV['HOME'], '.ssh', 'id_rsa.pub')
-      connection_options
+      method_option :key, :type => :string, :aliases => "-k", :default => File.join(ENV['HOME'], '.ssh', 'id_rsa.pub')
 
       desc "install-ssh-key", "Installs your local ssh key on the remote server."
 
@@ -122,32 +134,25 @@ module RubyVPS
 
         execute_remotely!(
           %{mkdir -p ~/.ssh && echo "#{File.read(options[:key])}" >> ~/.ssh/authorized_keys},
-          "Preparing to install ssh key..",
-          options
+          "Preparing to install ssh key.."
         )
       end
-
-      connection_options
 
       desc "generate-remote-ssh-key", "Generates a id_rsa/id_rsa.pub key pair on the remote server."
 
       def generate_remote_ssh_key        
         execute_remotely!(
           "rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub > /dev/null 2>&1; ssh-keygen -N '' -t rsa -f ~/.ssh/id_rsa",
-          "Preparing to generate a new ssh key..",
-          options
+          "Preparing to generate a new ssh key.."
         )
       end
-
-      connection_options
 
       desc "remote-ssh-key", "Displays the public ssh key (id_rsa.pub) of the remote server."
 
       def remote_ssh_key
         execute_remotely!(
           %{cat ~/.ssh/id_rsa.pub || echo "Remote key not yet generated!"},
-          "Preparing to read the public ssh key..",
-          options
+          "Preparing to read the public ssh key.."
         )
       end
 

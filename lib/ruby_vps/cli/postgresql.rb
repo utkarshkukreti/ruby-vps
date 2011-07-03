@@ -10,22 +10,19 @@ module RubyVPS
       include RubyVPS::Helpers
 
       method_option :version, :type => :string, :aliases => "-v", :default => "9.0.4"
-      connection_options
 
       desc "provision", "Provisions the Linux server with PostgreSQL."
 
       def provision
-        version = options[:version]
-
         command = <<-EOS
           mkdir ~/tmp
           cd ~/tmp
 
           sudo useradd postgres -s /bin/bash -m
 
-          wget http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v#{version}/postgresql-#{version}.tar.gz
-          tar xvfz postgresql-#{version}.tar.gz
-          cd postgresql-#{version}
+          wget http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v#{options[:version]}/postgresql-#{options[:version]}.tar.gz
+          tar xvfz postgresql-#{options[:version]}.tar.gz
+          cd postgresql-#{options[:version]}
           sudo ./configure \
           --prefix=/etc/postgresql \
           --with-openssl \
@@ -50,7 +47,7 @@ module RubyVPS
           sleep 5 && sudo su - postgres -c "/etc/postgresql/bin/createuser deployer --createdb --no-createrole --no-superuser"
         EOS
 
-        execute_remotely!(command, "Preparing to install PostgreSQL..", options)
+        execute_remotely!(command, "Preparing to install PostgreSQL..")
       end
 
     end

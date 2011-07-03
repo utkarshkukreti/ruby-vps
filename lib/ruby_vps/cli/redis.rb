@@ -10,21 +10,18 @@ module RubyVPS
       include RubyVPS::Helpers
 
       method_option :version, :type => :string, :aliases => "-v", :default => "2.2.11"
-      connection_options
 
       desc "provision", "Provisions the Linux server with Redis."
 
       def provision
-        version = options[:version]
-
         command = <<-EOS
           mkdir ~/tmp
           cd ~/tmp
 
-          wget http://redis.googlecode.com/files/redis-#{version}.tar.gz
-          tar -xf redis-#{version}.tar.gz
+          wget http://redis.googlecode.com/files/redis-#{options[:version]}.tar.gz
+          tar -xf redis-#{options[:version]}.tar.gz
           sudo rm -rf /etc/redis
-          cd redis-#{version}
+          cd redis-#{options[:version]}
           sudo make PREFIX=/etc/redis install
           sudo mv redis.conf /etc/redis/redis.conf
           sudo sed -i "s/appendonly no/appendonly yes/" /etc/redis/redis.conf
@@ -40,7 +37,7 @@ module RubyVPS
           sleep 1 && sudo restart redis || sudo start redis
         EOS
 
-        execute_remotely!(command, "Preparing to install Redis..", options)
+        execute_remotely!(command, "Preparing to install Redis..")
       end
 
     end

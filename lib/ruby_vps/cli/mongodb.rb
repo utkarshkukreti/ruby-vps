@@ -11,7 +11,6 @@ module RubyVPS
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.8.2"
       method_option :bit,     :type => :string, :aliases => "-b", :default => "64"
-      connection_options
 
       desc "provision", "Provisions the Linux server with MongoDB."
 
@@ -45,7 +44,7 @@ module RubyVPS
           sleep 1 && sudo restart mongodb || sudo start mongodb
         EOS
 
-        execute_remotely!(command, "Preparing to install MongoDB..", options)
+        execute_remotely!(command, "Preparing to install MongoDB..")
       end
 
     end

@@ -28,22 +28,21 @@ module RubyVPS
       method_option :client_max_body_size,          :type => :string, :default => "25"
       method_option :applications_path,             :type => :string, :default => "applications"
 
-      connection_options
-
-      desc "generate_config", "Generates the main nginx configuration file"
+      desc "generate-config", "Generates the main nginx configuration file"
 
       def generate_config
+        co = load_connection_options!
         nginx_conf = Tempfile.new('nginx.conf')
         template("main.conf", nginx_conf.path)
 
-        Net::SFTP.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |sftp|
+        Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
           sftp.upload!(
             nginx_conf.path,
             "tmp/nginx.conf"
           )
         end
 
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
+        Net::SSH.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |ssh|
           ssh.exec! "sudo mv ~/tmp/nginx.conf #{options[:out]}/nginx.conf"
         end
       end
@@ -66,15 +65,14 @@ module RubyVPS
       method_option :ssl_redirect, :type => :boolean, :default => false, :aliases => "-r", :desc => "Redirect all requests from HTTP to HTTPS."
       method_option :ssl_path, :type => :string, :default => "/etc/ssl", :desc => "Path to where the SSL files will be copied."
 
-      connection_options
-
       desc "generate-app-config", "Generates an application-specific configuration file"
 
       def generate_app_config
+        co = load_connection_options!
         app_conf = Tempfile.new('app.conf')
         template("app.conf", app_conf.path)
 
-        Net::SFTP.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |sftp|
+        Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
           [:crt, :key].each do |file|
             if options[file] and File.exist?(options[file])
               sftp.upload!(
@@ -90,8 +88,9 @@ module RubyVPS
           )
         end
 
-        Net::SSH.start(options[:ip], options[:user], :password => options[:password], :port => options[:port]) do |ssh|
-          ssh.exec "sudo mv #{File.join("~/tmp", "#{options[:name]}.conf")} #{File.join(options[:out], "#{options[:name]}.conf")}"
+        Net::SSH.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |ssh|
+          ssh.exec "sudo mv #{File.join("~/tmp", "#{options[:name]}.conf")} " +
+          "#{File.join(options[:out], "#{options[:name]}.conf")}"
           [:crt, :key].each do |file|
             if options[file] and File.exist?(options[file])
               ssh.exec "sudo mv ~/tmp/#{File.basename(options[file])} #{options[:ssl_path]}/#{File.basename(options[file])}"
@@ -101,13 +100,10 @@ module RubyVPS
       end
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.0.4"
-      connection_options
 
       desc "provision", "Provisions the Linux server with NGINX."
 
       def provision
-        version = options[:version]
-
         command = <<-EOS
           sudo aptitude update
           sudo aptitude install -y autotools-dev libpcre3-dev zlib1g-dev libssl-dev
@@ -115,9 +111,9 @@ module RubyVPS
           mkdir ~/tmp
           cd ~/tmp
 
-          wget http://nginx.org/download/nginx-#{version}.tar.gz
-          tar -zxvf nginx-#{version}.tar.gz
-          cd nginx-#{version}
+          wget http://nginx.org/download/nginx-#{options[:version]}.tar.gz
+          tar -zxvf nginx-#{options[:version]}.tar.gz
+          cd nginx-#{options[:version]}
           sudo ./configure --prefix=/etc/nginx --sbin-path=/usr/sbin --with-http_ssl_module
           sudo make && sudo make install
 
@@ -134,7 +130,7 @@ module RubyVPS
           sleep 1 && sudo restart nginx || sudo start nginx
         EOS
 
-        execute_remotely!(command, "Preparing to install Nginx..", options)
+        execute_remotely!(command, "Preparing to install Nginx..")
       end
 
     end
