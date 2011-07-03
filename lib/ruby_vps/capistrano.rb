@@ -13,6 +13,13 @@ Capistrano::Configuration.instance(true).load do
     end
   end
 
+  namespace :ruby_vps do
+    desc "Run a command on the remote server from the application root"
+    task :cmd, :roles => :app do
+      run "cd #{current_path} && #{ENV['COMMAND']}"
+    end
+  end
+
   namespace :foreman do
     desc "Export the Procfile to Ubuntu's upstart scripts"
     task :export, :roles => :app do
