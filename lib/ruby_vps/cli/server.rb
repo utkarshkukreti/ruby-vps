@@ -99,7 +99,7 @@ module RubyVPS
           say "* Basic packages"
           say "* Ruby Version Manager (RVM) and install #{options[:ruby_version]}"
           say "* Create the \"deployer\" user (and grant sudo-privileges), add to RVM group, etc."
-          say "* Install gems: bundler, upstart"
+          say "* Install gems: bundler, foreman"
           say "* Set the default RACK_ENV and RAILS_ENV to production"
           say "* Changing SSH port from #{options[:port]} to #{options[:set_ssh_port]}"
           say "* Enable firewall with UFW, allowing only ports 80, 433 and #{options[:set_ssh_port]} for security"
