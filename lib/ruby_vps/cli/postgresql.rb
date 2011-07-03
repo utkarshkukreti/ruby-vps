@@ -18,6 +18,8 @@ module RubyVPS
           mkdir ~/tmp
           cd ~/tmp
 
+          sudo aptitude update -y && sudo aptitude install -y libpq-dev
+
           sudo useradd postgres -s /bin/bash -m
 
           wget http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v#{options[:version]}/postgresql-#{options[:version]}.tar.gz
