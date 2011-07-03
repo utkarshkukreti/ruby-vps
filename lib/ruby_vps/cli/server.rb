@@ -156,6 +156,14 @@ module RubyVPS
         )
       end
 
+      method_option :command, :aliases => "-c", :type => :string, :required => true
+
+      desc "remote-command", "Run a command on the remote server."
+
+      def remote_command
+        execute_remotely!(options[:command], "Running remote command..")
+      end
+
     end
   end
 end
