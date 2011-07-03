@@ -78,7 +78,7 @@ module RubyVPS
               sftp.upload!(
                 File.expand_path(options[file]),
                 File.join("tmp", File.basename(options[file]))
-              )              
+              )
             end
           end
 

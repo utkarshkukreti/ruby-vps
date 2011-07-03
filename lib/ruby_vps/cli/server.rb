@@ -87,12 +87,12 @@ module RubyVPS
 
         Net::SSH.start(options[:ip], 'root', :password => options[:root_password], :port => options[:port]) do |ssh|
           say "Connection established! Preparing to provision server..", :green
-        
+
           ssh.exec!(command) do |channel, stream, data|
             puts data if stream == :stdout
             channel.send_data("#{options[:set_deployer_password]}\n") if data =~ /Password\:/
           end
-        
+
           say ""
           say "The server has been provisioned, a short summary:", :green
           say "-------------------------------------------------", :green
@@ -112,7 +112,7 @@ module RubyVPS
             :ip       => options[:ip],
             :port     => options[:set_ssh_port],
             :password => options[:set_deployer_password]
-          }.to_yaml)          
+          }.to_yaml)
         end
 
         say "Created configuration file in config/deploy.yml containing connection options.", :green
@@ -140,7 +140,7 @@ module RubyVPS
 
       desc "generate-remote-ssh-key", "Generates a id_rsa/id_rsa.pub key pair on the remote server."
 
-      def generate_remote_ssh_key        
+      def generate_remote_ssh_key
         execute_remotely!(
           "rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub > /dev/null 2>&1; ssh-keygen -N '' -t rsa -f ~/.ssh/id_rsa",
           "Preparing to generate a new ssh key.."
