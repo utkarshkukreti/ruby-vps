@@ -32,7 +32,8 @@ module RubyVPS
 
       def generate_config
         co = load_connection_options!
-        nginx_conf = Tempfile.new('nginx.conf')
+        nginx_conf = Tempfile.new("nginx.conf")
+        FileUtils.rm(nginx_conf.path)
         template("main.conf", nginx_conf.path)
 
         Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
@@ -45,6 +46,8 @@ module RubyVPS
         Net::SSH.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |ssh|
           ssh.exec! "sudo mv ~/tmp/nginx.conf #{options[:out]}/nginx.conf"
         end
+
+        execute_remotely!("sudo start nginx || sudo restart nginx", "Restarting NGINX..")
       end
 
       # general
@@ -69,7 +72,8 @@ module RubyVPS
 
       def generate_app_config
         co = load_connection_options!
-        app_conf = Tempfile.new('app.conf')
+        app_conf = Tempfile.new("nginx.conf")
+        FileUtils.rm(app_conf.path)
         template("app.conf", app_conf.path)
 
         Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
@@ -97,6 +101,8 @@ module RubyVPS
             end
           end
         end
+
+        execute_remotely!("sudo start nginx || sudo restart nginx", "Restarting NGINX..")
       end
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.0.4"
