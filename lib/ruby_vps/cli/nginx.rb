@@ -1,8 +1,5 @@
 # encoding: utf-8
 
-require 'tempfile'
-require 'net/ssh'
-require 'net/sftp'
 require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
@@ -110,33 +107,7 @@ module RubyVPS
       desc "provision", "Provisions the Linux server with NGINX."
 
       def provision
-        command = <<-EOS
-          sudo aptitude update
-          sudo aptitude install -y autotools-dev libpcre3-dev zlib1g-dev libssl-dev
-
-          mkdir ~/tmp
-          cd ~/tmp
-
-          wget http://nginx.org/download/nginx-#{options[:version]}.tar.gz
-          tar -zxvf nginx-#{options[:version]}.tar.gz
-          cd nginx-#{options[:version]}
-          sudo ./configure --prefix=/etc/nginx --sbin-path=/usr/sbin --with-http_ssl_module
-          sudo make && sudo make install
-
-          sudo mkdir -p /etc/nginx/logs /etc/nginx/tmp/pids /etc/nginx/conf/applications
-
-          echo "
-          start on runlevel [2345]
-          stop on runlevel [016]
-          respawn
-
-          exec /usr/sbin/nginx -c /etc/nginx/conf/nginx.conf  -g 'daemon off;'
-          " | sudo tee /etc/init/nginx.conf
-
-          sleep 1 && sudo restart nginx || sudo start nginx
-        EOS
-
-        execute_remotely!(command, "Preparing to install Nginx..")
+        execute_remotely! provision_script("nginx", binding), "Preparing to install NGINX.."
       end
 
     end

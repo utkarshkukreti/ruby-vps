@@ -1,0 +1,19 @@
+mkdir ~/tmp
+cd ~/tmp
+
+wget http://fastdl.mongodb.org/linux/mongodb-linux-<%= bit %>-<%= version %>.tgz
+tar -xf mongodb-linux-<%= bit %>-<%= version %>.tgz
+sudo rm -rf /etc/mongodb
+sudo mv mongodb-linux-<%= bit %>-<%= version %> /etc/mongodb
+
+sudo mkdir -p /data/db /data/log
+
+echo "
+start on runlevel [2345]
+stop on runlevel [016]
+respawn
+
+exec /etc/mongodb/bin/mongod --journal --logpath /data/log/mongo.log --dbpath /data/db
+" | sudo tee /etc/init/mongodb.conf
+
+sleep 1 && sudo restart mongodb || sudo start mongodb

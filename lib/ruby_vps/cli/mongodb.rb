@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-require 'net/ssh'
 require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
@@ -22,29 +21,7 @@ module RubyVPS
         else raise "Choose either 32 or 64 bit"
         end
 
-        command = <<-EOS
-          mkdir ~/tmp
-          cd ~/tmp
-
-          wget http://fastdl.mongodb.org/linux/mongodb-linux-#{bit}-#{version}.tgz
-          tar -xf mongodb-linux-#{bit}-#{version}.tgz
-          sudo rm -rf /etc/mongodb
-          sudo mv mongodb-linux-#{bit}-#{version} /etc/mongodb
-
-          sudo mkdir -p /data/db /data/log
-
-          echo "
-          start on runlevel [2345]
-          stop on runlevel [016]
-          respawn
-
-          exec /etc/mongodb/bin/mongod --journal --logpath /data/log/mongo.log --dbpath /data/db
-          " | sudo tee /etc/init/mongodb.conf
-
-          sleep 1 && sudo restart mongodb || sudo start mongodb
-        EOS
-
-        execute_remotely!(command, "Preparing to install MongoDB..")
+        execute_remotely! provision_script("mongodb", binding), "Preparing to install MongoDB.."
       end
 
     end

@@ -1,0 +1,57 @@
+apt-get update -y
+apt-get install -y aptitude
+
+aptitude update -y
+aptitude safe-upgrade -y
+
+aptitude install -y \
+gcc g++ build-essential bison openssl libreadline6 libreadline6-dev \
+htop git-core curl wget ufw tree rsync psmisc nano vim gdb imagemagick \
+zlib1g zlib1g-dev libssl-dev libyaml-dev libxml2-dev libxslt-dev \
+autoconf libpcre3 libpcre3-dev libpcrecpp0 libc6-dev ncurses-dev
+
+useradd deployer -s /bin/bash -m --password="$(openssl passwd <%= options[:set_deployer_password] %>)"
+
+if [[ $(cat /etc/sudoers) != *deployer* ]]; then
+  sed -i "/root.*ALL=(ALL) ALL/ a\\deployer ALL\=\(ALL\) NOPASSWD\: ALL" /etc/sudoers
+fi
+
+curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > /home/deployer/.gemrc
+chown deployer:deployer /home/deployer/.gemrc
+
+mkdir -p /var/applications
+chown -R deployer:www-data /var/applications
+
+aptitude install -y libsqlite3-0 libsqlite3-dev sqlite3 openjdk-6-jre-headless
+
+bash < <(curl -s https://rvm.beginrescueend.com/install/rvm)
+
+if [[ $(cat ~/.bashrc) != */usr/local/rvm/scripts/rvm* ]]; then
+  echo -e "\n[[ -s /usr/local/rvm/scripts/rvm ]] && source /usr/local/rvm/scripts/rvm\n\n" | cat - ~/.bashrc > ~/.bashrc.tmp
+  mv ~/.bashrc.tmp ~/.bashrc && source ~/.bashrc
+fi
+
+ln -fs /usr/local/bin/rvm-shell /usr/local/rvm/bin/rvm-shell
+
+curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > ~/.gemrc
+
+rvm install <%= options[:set_ruby_version] %>
+rvm use <%= options[:set_ruby_version] %> --default
+
+gem install bundler foreman backup
+gem install bundler --pre
+
+usermod -G rvm deployer
+
+echo -e "export RACK_ENV=production\nexport RAILS_ENV=production\n" | cat - /home/deployer/.bashrc > /home/deployer/.bashrc.tmp
+mv /home/deployer/.bashrc.tmp /home/deployer/.bashrc
+
+sed -i "s/Port 22/Port <%= options[:set_ssh_port] %>/" /etc/ssh/sshd_config
+/etc/init.d/ssh reload
+
+ufw allow <%= options[:set_ssh_port] %>
+ufw allow 80
+ufw allow 443
+ufw --force enable
+
+passwd -l root

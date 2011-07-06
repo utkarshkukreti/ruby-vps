@@ -1,6 +1,11 @@
 # encoding: utf-8
 
+require 'erb'
 require 'yaml'
+require 'fileutils'
+require 'tempfile'
+require 'net/ssh'
+require 'net/sftp'
 
 module RubyVPS
   module Helpers
@@ -35,6 +40,14 @@ module RubyVPS
       rescue Net::SSH::AuthenticationFailed => e
         say "\nCould not connect to the server (could not authenticate). Please ensure the password is correct.", :red
         puts "\n#{e.backtrace}"
+      end
+
+      def provision_script(utility, binding)
+        ERB.new(
+          File.read(
+            File.expand_path("../cli/scripts/#{utility}/provision.erb", __FILE__)
+          )
+        ).result(binding)
       end
     end
 

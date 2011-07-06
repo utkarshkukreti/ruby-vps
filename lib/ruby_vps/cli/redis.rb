@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-require 'net/ssh'
 require File.expand_path("../../helpers", __FILE__)
 
 module RubyVPS
@@ -14,30 +13,7 @@ module RubyVPS
       desc "provision", "Provisions the Linux server with Redis."
 
       def provision
-        command = <<-EOS
-          mkdir ~/tmp
-          cd ~/tmp
-
-          wget http://redis.googlecode.com/files/redis-#{options[:version]}.tar.gz
-          tar -xf redis-#{options[:version]}.tar.gz
-          sudo rm -rf /etc/redis
-          cd redis-#{options[:version]}
-          sudo make PREFIX=/etc/redis install
-          sudo mv redis.conf /etc/redis/redis.conf
-          sudo sed -i "s/appendonly no/appendonly yes/" /etc/redis/redis.conf
-
-          echo "
-          start on runlevel [2345]
-          stop on runlevel [016]
-          respawn
-
-          exec /etc/redis/bin/redis-server
-          " | sudo tee /etc/init/redis.conf
-
-          sleep 1 && sudo restart redis || sudo start redis
-        EOS
-
-        execute_remotely!(command, "Preparing to install Redis..")
+        execute_remotely! provision_script("redis", binding), "Preparing to install Redis.."
       end
 
     end
