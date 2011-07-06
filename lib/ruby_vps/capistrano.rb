@@ -14,17 +14,18 @@ Capistrano::Configuration.instance(true).load do
   end
 
   namespace :ruby_vps do
-    desc "Run a command on the remote server from the application root"
+    desc "Run a command on the remote server from the application root ( C='my command' )"
     task :cmd, :roles => :app do
-      run "cd #{current_path} && #{ENV['COMMAND']}"
+      run "cd #{current_path} && #{ENV['C']}"
     end
   end
 
   namespace :foreman do
-    desc "Export the Procfile to Ubuntu's upstart scripts"
+    desc "Export the Procfile to Ubuntu's Upstart configuration"
     task :export, :roles => :app do
       run "cd #{release_path} && rvmsudo foreman export upstart /etc/init " +
-          "-f ./Procfile -a #{application} -u #{user} -l #{shared_path}/log"
+          "-f ./Procfile -a #{application} -u #{user} -l #{shared_path}/log" +
+          (ENV['C'] ? "-c #{ENV['C']}" : "")
     end
 
     desc "Start the application services"
@@ -50,10 +51,6 @@ Capistrano::Configuration.instance(true).load do
 
   namespace :deploy do
     task :restart do
-      begin
-        run "cd #{release_path} && rake db:migrate" if db_migrate
-      rescue NameError
-      end
     end
 
     task :finalize_update, :except => { :no_release => true } do

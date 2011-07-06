@@ -15,10 +15,33 @@ set :scm,             :<%= options[:scm] %>
 set :port,            <%= options[:port] %>
 set :use_sudo,        <%= options[:use_sudo] ? "true" : "false" %>
 
-set :db_migrate,      true
-
 default_run_options[:pty] = <%= options[:default_run_options] ? "true" : "false" %>
 
 role :web, "<%= options[:ip] %>"
 role :app, "<%= options[:ip] %>"
 role :db,  "<%= options[:ip] %>", :primary => true
+
+# Note:
+# after deploy:restart, the processes in ./Procfile will be
+# (re)exported and (re)started on the server by ruby_vps/capistrano
+#
+# Any command you want to run before the processes are (re)exported and (re)started
+# must be defined inside "task :restart do; end" or a previously invoked task.
+namespace :deploy do
+  task :restart do
+    run "cd #{release_path} && rake db:create db:migrate"
+  end
+
+  # ... define more custom tasks here if needed ...
+end
+
+# Tasks:
+# Run `cap -T` to see a list of available Capistrano tasks provided by RubyVPS
+# commands include start/stop/restarting of processes.
+
+# Concurrency:
+# If you want to deploy or re-export with different concurrency levels for your processes
+# you can pass in the concurrency level using the C environment variable, for example:
+#
+#   $ C="web=2 worker=3 pubsub=1" cap deploy
+#   $ C="web=1 worker=2 pubsub=1" cap foreman:export foreman:restart
