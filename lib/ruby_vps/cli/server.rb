@@ -47,7 +47,7 @@ module RubyVPS
           say "* Enabled firewall (UFW), only allowing external access from ports: 80, 433 and #{options[:set_ssh_port]} (security)"
           say "* Disable password-based ssh logins as root (security)"
           say ""
-          say "From now on, log in with: $ ssh deployer@#{options[:ip]} -p #{options[:port]}"
+          say "From now on, log in with: $ ssh deployer@#{options[:ip]} -p #{options[:set_ssh_port]} # password: #{options[:set_deployer_password]}"
           say ""
           say "If you need to perform tasks as root, use sudo:"
           say ""
