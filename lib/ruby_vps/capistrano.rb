@@ -23,9 +23,10 @@ Capistrano::Configuration.instance(true).load do
   namespace :foreman do
     desc "Export the Procfile to Ubuntu's Upstart configuration"
     task :export, :roles => :app do
-      run "cd #{release_path} && rvmsudo foreman export upstart /etc/init " +
-          "-f ./Procfile -a #{application} -u #{user} -l #{shared_path}/log" +
-          (ENV['C'] ? "-c #{ENV['C']}" : "")
+      run "cd #{current_path} && rvmsudo foreman export upstart /etc/init " +
+          "-f ./Procfile -a #{application} -u #{user} -l #{shared_path}/log " +
+          "-t /var/upstart/applications " + (ENV['C'] ? "-c #{ENV['C']} " : " ") +
+          "-p #{ENV['P'] ? ENV['P'] : '5000'}"
     end
 
     desc "Start the application services"

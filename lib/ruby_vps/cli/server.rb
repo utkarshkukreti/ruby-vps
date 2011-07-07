@@ -22,6 +22,8 @@ module RubyVPS
       def init
         say "Attempting to connect to server #{options[:ip]} on port #{options[:port]}.."
 
+        master_conf = File.read(File.expand_path("../scripts/server/master.conf.erb", __FILE__))
+
         Net::SSH.start(options[:ip], 'root', :password => options[:password], :port => options[:port]) do |ssh|
           say "Connection established! Preparing to perform initial server provisioning..", :green
 
