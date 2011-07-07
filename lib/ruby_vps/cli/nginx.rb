@@ -71,6 +71,14 @@ module RubyVPS
         co = load_connection_options!
         app_conf = Tempfile.new("nginx.conf")
         FileUtils.rm(app_conf.path)
+
+        port_range = if options[:port_range]
+          ports = options[:port_range].split('..').map(&:to_i)
+          (ports.first..ports.last).to_a
+        else
+          nil
+        end
+
         template("app.conf", app_conf.path)
 
         Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
@@ -100,6 +108,11 @@ module RubyVPS
         end
 
         execute_remotely!("sudo start nginx || sudo restart nginx", "Restarting NGINX..")
+
+        if port_range
+          command = port_range.map { |port| "sudo ufw allow #{port}" }.join(" && ")
+          execute_remotely!(command, "Firewall: Allowing access to port(s): #{port_range.join(", ")} for #{options[:app_server]}")
+        end
       end
 
       method_option :version, :type => :string, :aliases => "-v", :default => "1.0.4"
