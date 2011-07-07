@@ -39,8 +39,8 @@ curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > ~/.ge
 rvm install <%= options[:set_ruby_version] %>
 rvm use <%= options[:set_ruby_version] %> --default
 
-gem install bundler foreman backup
-gem install bundler --pre
+gem install foreman backup
+gem install bundler -v 1.1.pre.4 --pre
 
 usermod -G rvm deployer
 
