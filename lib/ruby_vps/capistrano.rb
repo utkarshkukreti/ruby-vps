@@ -2,9 +2,9 @@
 
 Capistrano::Configuration.instance(true).load do
 
-  after 'deploy:update', 'bundle:install'
-  after 'deploy:update', 'foreman:export'
-  after 'deploy:restart', 'foreman:restart'
+  after "deploy:update",  "bundle:install"
+  after "deploy:update",  "foreman:export"
+  after "deploy:restart", "foreman:restart"
 
   namespace :bundle do
     desc "Installs the application dependencies"
