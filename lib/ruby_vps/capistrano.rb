@@ -23,30 +23,33 @@ Capistrano::Configuration.instance(true).load do
   namespace :foreman do
     desc "Export the Procfile to Ubuntu's Upstart configuration"
     task :export, :roles => :app do
-      run "cd #{current_path} && rvmsudo foreman export upstart /etc/init " +
+      run "cd #{current_path} && rvmsudo foreman export bluepill /etc/bluepill/config " +
           "-f ./Procfile -a #{application} -u #{user} -l #{shared_path}/log " +
-          "-t /var/upstart/applications " + (ENV['C'] ? "-c #{ENV['C']} " : " ") +
+          "-t /etc/bluepill/template " + (ENV['C'] ? "-c #{ENV['C']} " : " ") +
           "-p #{ENV['P'] ? ENV['P'] : '5000'}"
     end
 
     desc "Start the application services"
     task :start, :roles => :app do
-      sudo "start #{application}"
+      run "rvmsudo bluepill load /etc/bluepill/config/#{application}.pill"
+      run "rvmsudo bluepill start"
     end
 
     desc "Stop the application services"
     task :stop, :roles => :app do
-      sudo "stop #{application}"
+      run "rvmsudo bluepill load /etc/bluepill/config/#{application}.pill"
+      run "rvmsudo bluepill stop"
     end
 
     desc "Restart the application services"
     task :restart, :roles => :app do
-      run "sudo start #{application} || sudo restart #{application}"
+      run "rvmsudo bluepill load /etc/bluepill/config/#{application}.pill"
+      run "rvmsudo bluepill restart"
     end
 
     desc "Display logs for a certain process"
     task :logs, :roles => :app do
-      run "cd #{current_path}/log && cat #{ENV["PROCESS"]}.log"
+      run "cd #{current_path}/log && tail -f #{ENV["PROCESS"] || "*"}.log"
     end
   end
 

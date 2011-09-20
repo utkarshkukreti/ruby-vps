@@ -27,6 +27,9 @@ Gem::Specification.new do |gem|
 
   ##
   # Production gem dependencies
-  gem.add_dependency 'thor', ['~> 0.14.6']
+  gem.add_dependency 'thor',       ['~> 0.14.6']
+  gem.add_dependency 'capistrano', ['~> 2.8.0']
+  gem.add_dependency 'net-ssh',    ['~> 2.2.1']
+  gem.add_dependency 'net-sftp',   ['~> 2.0.5']
 
 end

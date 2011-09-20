@@ -1,0 +1,39 @@
+Bluepill.application(\"<%= app %>\", :foreground => false, :log_file => \"/var/log/bluepill.log\") do |app|
+
+  app.uid = \"<%= user %>\"
+  app.gid = \"<%= user %>\"
+
+<% engine.processes.values.each do |process| %>
+<% 1.upto(concurrency[process.name]) do |num| %>
+<% port = engine.port_for(process, num, options[:port]) %>
+  app.process(\"<%= process.name %>-<%=num%>\") do |process|
+    process.start_command = \"<%= process.command.gsub(\"\$PORT\", port.to_s) %>\"
+
+    process.working_dir  = \"<%= engine.directory %>\"
+    process.daemonize    = true
+    process.environment  = {\"PORT\" => \"<%= port %>\", \"RACK_ENV\" => \"production\", \"RAILS_ENV\" => \"production\"}
+    process.stop_signals = [:quit, 30.seconds, :term, 5.seconds, :kill]
+
+    process.supplementary_groups = ['rvm']
+
+    process.stdout = process.stderr = \"<%= log_root %>/<%= app %>-<%= process.name %>-<%=num%>.log\"
+
+    if process.name == \"worker\"
+      # process.checks :cpu_usage, :every => 10.seconds, :below => 5, :times => 3
+      # process.checks :mem_usage, :every => 10.seconds, :below => 135.megabytes, :times => [3,5]
+    end
+
+    process.monitor_children do |child|
+      child.stop_command \"kill -QUIT {{PID}}\"
+
+      if process.name == \"web\"
+        # child.checks :cpu_usage, :every => 10.seconds, :below => 5, :times => 3
+        # child.checks :mem_usage, :every => 10.seconds, :below => 135.megabytes, :times => [3,5]
+      end
+    end
+
+    process.group = \"<%= app %>-<%= process.name %>\"
+  end
+<% end %>
+<% end %>
+end

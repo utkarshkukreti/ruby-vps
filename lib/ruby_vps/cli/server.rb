@@ -22,7 +22,7 @@ module RubyVPS
       def init
         say "Attempting to connect to server #{options[:ip]} on port #{options[:port]}.."
 
-        master_conf = File.read(File.expand_path("../scripts/server/master.conf.erb", __FILE__))
+        master_pill = File.read(File.expand_path("../scripts/server/master.pill.erb", __FILE__))
 
         Net::SSH.start(options[:ip], 'root', :password => options[:password], :port => options[:port]) do |ssh|
           say "Connection established! Preparing to perform initial server provisioning..", :green
@@ -40,14 +40,16 @@ module RubyVPS
           say "  gcc build-essential htop curl git openssl ufw tree rsync imagemagick nano vim"
           say "* Installed Ruby Version Manager (RVM)"
           say "* Ruby installed: #{options[:set_ruby_version]} (set as default)"
-          say "* Gems installed: bundler, foreman"
+          say "* Gems installed: bundler, foreman, bluepill, backup"
           say "* Created the \"deployer\" user with sudo privileges"
           say "* Set the default RACK_ENV and RAILS_ENV to production"
           say "* Changed SSH port from #{options[:port]} to #{options[:set_ssh_port]}" if options[:set_ssh_port] != options[:port]
           say "* Enabled firewall (UFW), only allowing external access from ports: 80, 433 and #{options[:set_ssh_port]} (security)"
           say "* Disable password-based ssh logins as root (security)"
           say ""
-          say "From now on, log in with: $ ssh deployer@#{options[:ip]} -p #{options[:set_ssh_port]} # password: #{options[:set_deployer_password]}"
+          say "From now on, log in with:"
+          say ""
+          say "  $ ssh deployer@#{options[:ip]} -p #{options[:set_ssh_port]} # password: #{options[:set_deployer_password]}"
           say ""
           say "If you need to perform tasks as root, use sudo:"
           say ""
