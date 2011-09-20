@@ -29,10 +29,9 @@ role :db,  "<%= options[:ip] %>", :primary => true
 # must be defined inside "task :restart do; end" or a previously invoked task.
 namespace :deploy do
   task :restart do
-    run "cd #{release_path} && rake db:create db:migrate"
+    # Example for pre-compiling assets in >= Rails 3.1
+    # run "cd #{release_path} && RAILS_ENV=production bundle exec rake assets:precompile"
   end
-
-  # ... define more custom tasks here if needed ...
 end
 
 # Tasks:
