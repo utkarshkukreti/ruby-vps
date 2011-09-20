@@ -60,7 +60,7 @@ module RubyVPS
       method_option :unix_socket, :type => :string, :aliases => "-s", :desc => "Path to the app servers' socket. (for unicorn)"
 
       # secure socket layer
-      method_option :crt, :type => :string, :aliases => "-c", :desc => "Path to your SSL .crt file."
+      method_option :pem, :type => :string, :aliases => "-c", :desc => "Path to your SSL .pem or .crt file (tip: rename .crt to .pem before applying)."
       method_option :key, :type => :string, :aliases => "-k", :desc => "Path to your SSL .key file."
       method_option :ssl_redirect, :type => :boolean, :default => false, :aliases => "-r", :desc => "Redirect all requests from HTTP to HTTPS."
       method_option :ssl_path, :type => :string, :default => "/etc/ssl", :desc => "Path to where the SSL files will be copied."
@@ -82,7 +82,7 @@ module RubyVPS
         template("app.conf", app_conf.path)
 
         Net::SFTP.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |sftp|
-          [:crt, :key].each do |file|
+          [:pem, :key].each do |file|
             if options[file] and File.exist?(options[file])
               sftp.upload!(
                 File.expand_path(options[file]),
@@ -100,7 +100,7 @@ module RubyVPS
         Net::SSH.start(co[:ip], 'deployer', :password => co[:password], :port => co[:port]) do |ssh|
           ssh.exec "sudo mv #{File.join("~/tmp", "#{options[:name]}.conf")} " +
           "#{File.join(options[:out], "#{options[:name]}.conf")}"
-          [:crt, :key].each do |file|
+          [:pem, :key].each do |file|
             if options[file] and File.exist?(options[file])
               ssh.exec "sudo mv ~/tmp/#{File.basename(options[file])} #{options[:ssl_path]}/#{File.basename(options[file])}"
             end
