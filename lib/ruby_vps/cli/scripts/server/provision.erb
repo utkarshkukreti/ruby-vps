@@ -1,14 +1,24 @@
+##
+# Packages, Installations, Updates and Upgrades
+
+# Update package list and ensure aptitude is available
 apt-get update -y
 apt-get install -y aptitude
 
+# Update aptitude and upgrade existing packages
 aptitude update -y
 aptitude safe-upgrade -y
 
+# Install latest version of the following packages
 aptitude install -y \
 gcc g++ build-essential bison openssl libreadline6 libreadline6-dev \
 htop git-core curl wget ufw tree rsync psmisc nano vim gdb imagemagick \
 zlib1g zlib1g-dev libssl-dev libyaml-dev libxml2-dev libxslt-dev \
 autoconf libpcre3 libpcre3-dev libpcrecpp0 libc6-dev ncurses-dev
+
+
+##
+# Deployment User
 
 useradd deployer -s /bin/bash -m --password="$(openssl passwd <%= options[:set_deployer_password] %>)"
 
@@ -16,12 +26,21 @@ if [[ $(cat /etc/sudoers) != *deployer* ]]; then
   sed -i "/root.*ALL=(ALL) ALL/ a\\deployer ALL\=\(ALL\) NOPASSWD\: ALL" /etc/sudoers
 fi
 
+curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > ~/.gemrc
 curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > /home/deployer/.gemrc
 chown deployer:deployer /home/deployer/.gemrc
 
 mkdir -p /var/applications /var/upstart/applications
 echo -e "<%= master_conf %>" > /var/upstart/applications/master.conf.erb
+
+##
+# Filesystem preparations for logging and process monitoring with Upstart and Bluepill
+
 chown -R deployer:www-data /var/applications /var/upstart/applications
+
+
+##
+# RVM (Ruby Version Manager) and Dependency Installation / Configuration
 
 aptitude install -y libsqlite3-0 libsqlite3-dev sqlite3 openjdk-6-jre-headless
 
@@ -32,20 +51,32 @@ if [[ $(cat ~/.bashrc) != */usr/local/rvm/scripts/rvm* ]]; then
   mv ~/.bashrc.tmp ~/.bashrc && source ~/.bashrc
 fi
 
-ln -fs /usr/local/bin/rvm-shell /usr/local/rvm/bin/rvm-shell
+ln -nfs /usr/local/rvm/src/rvm/binscripts/rvm-shell /usr/local/rvm/bin/rvm-shell
 
-curl https://raw.github.com/meskyanichi/provisioner/master/lib/rvm/gemrc > ~/.gemrc
+source ~/.bashrc
 
+rvm get head
+rvm reload
 rvm install <%= options[:set_ruby_version] %>
 rvm use <%= options[:set_ruby_version] %> --default
 
-gem install foreman backup
-gem install bundler -v 1.1.pre.4 --pre
-
 usermod -G rvm deployer
+
+gem install foreman bluepill backup
+gem install bundler --pre
+
+chown -R deployer:rvm /usr/local/rvm
+
+
+##
+# Environment Configuration
 
 echo -e "export RACK_ENV=production\nexport RAILS_ENV=production\n" | cat - /home/deployer/.bashrc > /home/deployer/.bashrc.tmp
 mv /home/deployer/.bashrc.tmp /home/deployer/.bashrc
+
+
+##
+# (Optional) Security with UFW (Firewall)
 
 sed -i "s/Port 22/Port <%= options[:set_ssh_port] %>/" /etc/ssh/sshd_config
 /etc/init.d/ssh reload
@@ -54,5 +85,9 @@ ufw allow <%= options[:set_ssh_port] %>
 ufw allow 80
 ufw allow 443
 ufw --force enable
+
+
+##
+# Disable root password-based SSH logins
 
 passwd -l root
