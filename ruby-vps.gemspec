@@ -23,7 +23,7 @@ Gem::Specification.new do |gem|
 
   ##
   # The Backup CLI executable
-  gem.executables = %w[nginx capistrano mongodb postgresql server].map { |u| "ruby-vps-#{u}" }
+  gem.executables = %w[nginx capistrano mongodb postgresql server redis].map { |u| "ruby-vps-#{u}" }
 
   ##
   # Production gem dependencies
