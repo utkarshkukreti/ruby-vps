@@ -5,7 +5,7 @@ sudo aptitude update -y && sudo aptitude install -y libpq-dev
 
 sudo useradd postgres -s /bin/bash -m
 
-wget http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v<%= options[:version] %>/postgresql-<%= options[:version] %>.tar.gz
+wget http://ftp.postgresql.org/pub/source/v<%= options[:version] %>/postgresql-<%= options[:version] %>.tar.gz
 tar xvfz postgresql-<%= options[:version] %>.tar.gz
 cd postgresql-<%= options[:version] %>
 sudo ./configure \
